@@ -142,7 +142,73 @@ class KnowledgeBase(object):
         """
         ####################################################
         # Student code goes here
+        return self.kb_explain_helper(fact_or_rule, "", 1)
 
+    def kb_explain_helper(self, fact_or_rule, tb, initial):
+        result = ""
+
+        if isinstance(fact_or_rule, Fact):
+            if fact_or_rule not in self.facts:
+                return "Fact is not in the KB"
+
+            i = self.facts.index(fact_or_rule)
+
+            result += tb+fact_or_rule.name + ': '
+
+            result += str(fact_or_rule.statement)
+
+            if self.facts[i].asserted:
+                result += " ASSERTED"
+            else:
+                result += ''
+            #print('\n'+str(self.facts[i].supported_by)+'\n')
+
+            for p in self.facts[i].supported_by:
+                if self.facts[i].supported_by:
+                    result += '\n'+tb+"  SUPPORTED BY" + '\n'
+                result += self.kb_explain_helper(p[0], tb+"    ", 0) + '\n'
+                result += self.kb_explain_helper(p[1], tb+"    ", 0)
+
+        elif isinstance(fact_or_rule, Rule):
+            if fact_or_rule not in self.rules:
+                return "Rule is not in the KB"
+
+            i = self.rules.index(fact_or_rule)
+
+            result += tb+fact_or_rule.name + ': '
+
+
+            if len(fact_or_rule.lhs) == 1:
+                result += '(' + str(fact_or_rule.lhs[0]) + ')'
+            else:
+                result += '(' + str(fact_or_rule.lhs[0])
+
+                for l in range(1, len(fact_or_rule.lhs)):
+                    result += ', '+ str(fact_or_rule.lhs[l])
+                result += ")"
+
+            result += " -> " + str(self.rules[i].rhs)
+
+            if self.rules[i].asserted:
+                result += " ASSERTED"
+            else:
+                result += ""
+
+            #print('\n'+str(self.facts[i].supported_by)+'\n')
+
+            for p in self.rules[i].supported_by:
+                if self.rules[i].supported_by:
+                    result += '\n'+tb+"  SUPPORTED BY" + '\n'
+                result += self.kb_explain_helper(p[0], tb+"    ", 0) + '\n'
+                result += self.kb_explain_helper(p[1], tb+"    ", 0)
+
+        else:
+            return False
+
+        #if initial == 1:
+            #print("\n\n"+result+"\n\n")
+
+        return result
 
 class InferenceEngine(object):
     def fc_infer(self, fact, rule, kb):
@@ -154,7 +220,7 @@ class InferenceEngine(object):
             kb (KnowledgeBase) - A KnowledgeBase
 
         Returns:
-            Nothing            
+            Nothing
         """
         printv('Attempting to infer from {!r} and {!r} => {!r}', 1, verbose,
             [fact.statement, rule.lhs, rule.rhs])
